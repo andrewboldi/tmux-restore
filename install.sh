@@ -282,6 +282,21 @@ PLIST
 	fi
 }
 
+# The unit runs in the systemd user manager, which stops with the user's last login session
+# unless the user lingers. A detached tmux outlives a logout, and then nothing saves it: the
+# minute-by-minute save runs from the status line, which tmux draws only for an attached client.
+# Lingering keeps the shutdown save running for a tmux nobody is attached to or logged in for.
+enable_linger() {
+	local user=${USER:-$(id -un)}
+	have loginctl || return 0
+	[ "$(loginctl show-user "$user" -p Linger --value 2> /dev/null)" = yes ] && return 0
+	if loginctl enable-linger > /dev/null 2>&1; then
+		say "Enabled lingering for $user: the shutdown save keeps running after you log out"
+	else
+		warn "couldn't enable lingering: after you log out, a detached tmux is only saved while a client is attached. Run: sudo loginctl enable-linger $user"
+	fi
+}
+
 install_service() {
 	if [ "$(uname -s)" = Darwin ]; then
 		install_launch_agent
@@ -299,6 +314,7 @@ install_service() {
 	systemctl --user enable -q "$UNIT"
 	systemctl --user restart "$UNIT"
 	say "Enabled $UNIT: tmux is saved right before shutdown and reboot"
+	enable_linger
 	# An older copy of this setup ran a unit with another name; two at once would save twice.
 	if systemctl --user -q is-enabled tmux-shutdown-save.service 2> /dev/null; then
 		legacy=$(systemctl --user cat tmux-shutdown-save.service 2> /dev/null | grep '^ExecStart=' || true)

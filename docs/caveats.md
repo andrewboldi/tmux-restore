@@ -34,6 +34,12 @@ pane waits at that prompt like a fresh start would.
 installer points tmux-resurrect at a fork with the concurrent-restore fix. If your
 tmux-resurrect checkout has local changes, the installer leaves it alone and you don't get the fix.
 
+**Nobody attached, nobody logged in.** The minute-by-minute save runs from tmux's status line,
+which tmux draws only for an attached client, so a detached tmux is saved only at shutdown. That
+save runs in your systemd user manager, which stops with your last login session unless your user
+lingers. The installer enables lingering (`loginctl enable-linger`), and tells you the `sudo`
+command if it can't.
+
 **Saving at shutdown has a time limit.** logind waits for the save up to `InhibitDelayMaxSec`:
 5 s by default, 30 s on Ubuntu with unattended-upgrades. A save with 40 panes and long scrollback
 takes about 4 s. To check yours, run
