@@ -104,7 +104,8 @@ reset
 mkdir -p "$D/data/opencode"
 sqlite3 "$D/data/opencode/opencode.db" "CREATE TABLE session (id TEXT, parent_id TEXT, directory TEXT, time_updated INTEGER);
 	INSERT INTO session VALUES ('ses_A1', NULL, '/w/a', 1700000100000), ('ses_A0', NULL, '/w/a', 1700000020000),
-		('ses_Achild', 'ses_A1', '/w/a', 1700000200000), ('ses_B1', NULL, '/w/b', 1700000100000);"
+		('ses_Achild', 'ses_A1', '/w/a', 1700000200000), ('ses_B1', NULL, '/w/b', 1700000100000),
+		('ses_F1', NULL, '/w/f', 1700000100000);"
 E="XDG_DATA_HOME=$D/data"
 mkproc 100 1 /w/a 10 /usr/bin/zsh; ENVIRON=$E mkproc 101 100 /w/a 5000 opencode --model anthropic/x
 mkproc 200 1 /w/c 10 /usr/bin/zsh; ENVIRON=$E mkproc 201 200 /w/c 5000 opencode -s ses_OLD
@@ -112,8 +113,10 @@ mkproc 300 1 /w/b 10 /usr/bin/zsh; ENVIRON=$E mkproc 301 300 /w/b 5000 opencode
 mkproc 400 1 /w/b 10 /usr/bin/zsh; ENVIRON=$E mkproc 401 400 /w/b 5000 opencode
 mkproc 500 1 /w/d 10 /usr/bin/zsh; ENVIRON=$E mkproc 501 500 /w/d 5000 opencode run 'do x'
 mkproc 600 1 /w/e 10 /usr/bin/zsh; ENVIRON=$E mkproc 601 600 /w/e 5000 opencode ../e
+mkproc 700 1 /w/f 10 /usr/bin/zsh; ENVIRON=$E mkproc 701 700 /w/f 5000 /opt/opencode/bin/opencode.exe --model x
 pane 0 100 "opencode --model anthropic/x"; pane 1 200 "opencode -s ses_OLD"; pane 2 300 "opencode"
 pane 3 400 "opencode"; pane 4 500 "opencode run do x"; pane 5 600 "opencode ../e"
+pane 6 700 "opencode.exe --model x"
 run
 check "opencode: newest top-level session here" "TMUX_RESTORE=1 opencode -s ses_A1 --model anthropic/x" "${GOT[0]}"
 check "opencode: nothing written yet, keeps -s"  "TMUX_RESTORE=1 opencode -s ses_OLD"                    "${GOT[1]}"
@@ -121,6 +124,18 @@ check "opencode: two in one dir -> typed"        "TMUX_RESTORE=1 print -rz -- 'o
 check "opencode: two in one dir -> typed (2)"    "TMUX_RESTORE=1 print -rz -- 'opencode'"               "${GOT[3]}"
 check "opencode: 'run' isn't the TUI"            "TMUX_RESTORE=1 print -rz -- 'opencode run do x'"      "${GOT[4]}"
 check "opencode: nothing yet -> -c, dir dropped" "TMUX_RESTORE=1 opencode -c"                           "${GOT[5]}"
+check "opencode: 2.x .exe binary"                "TMUX_RESTORE=1 opencode -s ses_F1 --model x"          "${GOT[6]}"
+
+# opencode 2.x moved sessions to session_v2; older versions still use session
+reset
+mkdir -p "$D/data/opencode"
+sqlite3 "$D/data/opencode/opencode.db" "CREATE TABLE session_v2 (id TEXT, parent_id TEXT, directory TEXT, time_updated INTEGER);
+	INSERT INTO session_v2 VALUES ('ses_V2', NULL, '/w/v', 1700000100000);"
+E="XDG_DATA_HOME=$D/data"
+mkproc 100 1 /w/v 10 /usr/bin/zsh; ENVIRON=$E mkproc 101 100 /w/v 5000 /opt/opencode/bin/opencode.exe
+pane 0 100 "opencode.exe"
+run
+check "opencode: 2.x session_v2"                 "TMUX_RESTORE=1 opencode -s ses_V2"                    "${GOT[0]}"
 
 # --- pi ---------------------------------------------------------------------------------------
 reset
@@ -203,6 +218,45 @@ check "gemini: the session it was resumed with"   "TMUX_RESTORE=1 gemini --resum
 check "gemini: two in one dir -> typed"         "TMUX_RESTORE=1 print -rz -- 'node /opt/g/bin/gemini'" "${GOT[4]}"
 check "gemini: two in one dir -> typed (2)"     "TMUX_RESTORE=1 print -rz -- 'node /opt/g/bin/gemini'" "${GOT[5]}"
 check "gemini: headless -p isn't the TUI"         "TMUX_RESTORE=1 print -rz -- 'node /opt/g/bin/gemini -p do x'" "${GOT[3]}"
+
+# --- ai-memory wrapper ------------------------------------------------------------------------
+reset
+mkdir -p "$D/data/opencode"
+sqlite3 "$D/data/opencode/opencode.db" "CREATE TABLE session (id TEXT, parent_id TEXT, directory TEXT, time_updated INTEGER);
+	INSERT INTO session VALUES ('ses_W1', NULL, '/w/a', 1700000100000);"
+E="XDG_DATA_HOME=$D/data"
+mkproc 100 1 /w/a 10 /usr/bin/zsh
+ENVIRON=$E mkproc 101 100 /w/a 5000 /usr/local/bin/ai-memory run opencode --yolo --continue
+ENVIRON=$E mkproc 102 101 /w/a 5000 /opt/opencode/bin/opencode.exe --continue --auto
+pane 0 100 "ai-memory run opencode --yolo --continue"
+run
+check "ai-memory: opencode child resumes"        "TMUX_RESTORE=1 ai-memory run opencode -s ses_W1 --auto" "${GOT[0]}"
+
+reset
+mkproc 100 1 /w/a 10 /usr/bin/zsh
+mkproc 101 100 /w/a 5000 /usr/local/bin/ai-memory run claude --model opus
+mkproc 102 101 /w/a 5000 claude --model opus
+claude_registry 102 S1 5000
+pane 0 100 "ai-memory run claude --model opus"
+run
+check "ai-memory: claude child resumes"          "TMUX_RESTORE=1 ai-memory run claude --resume S1 --model opus" "${GOT[0]}"
+
+reset
+mkdir -p "$D/data/opencode"
+sqlite3 "$D/data/opencode/opencode.db" "CREATE TABLE session (id TEXT, parent_id TEXT, directory TEXT, time_updated INTEGER);"
+mkproc 100 1 /w/a 10 /usr/bin/zsh
+ENVIRON=$E mkproc 101 100 /w/a 5000 /usr/local/bin/ai-memory run opencode --yolo --continue
+ENVIRON=$E mkproc 102 101 /w/a 5000 /opt/opencode/bin/opencode.exe --continue --auto
+pane 0 100 "ai-memory run opencode --yolo --continue"
+run
+check "ai-memory: nothing written yet -> -c"     "TMUX_RESTORE=1 ai-memory run opencode -c --auto" "${GOT[0]}"
+
+reset
+mkproc 100 1 /w/a 10 /usr/bin/zsh
+mkproc 101 100 /w/a 5000 /usr/local/bin/ai-memory status
+pane 0 100 "ai-memory status"
+run
+check "ai-memory: not 'run' isn't the TUI"       "TMUX_RESTORE=1 print -rz -- 'ai-memory status'" "${GOT[0]}"
 
 # --- your own adapter, and a hook you already had --------------------------------------------
 reset
