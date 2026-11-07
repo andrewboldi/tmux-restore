@@ -38,7 +38,7 @@ tmux-resurrect checkout has local changes, the installer leaves it alone and you
 which tmux draws only for an attached client, so a detached tmux is saved only at shutdown. That
 save runs in your systemd user manager, which stops with your last login session unless your user
 lingers. The installer enables lingering (`loginctl enable-linger`), and tells you the `sudo`
-command if it can't.
+command if it can't. `--uninstall` turns it off again if the installer turned it on.
 
 **Saving at shutdown has a time limit.** logind waits for the save up to `InhibitDelayMaxSec`:
 5 s by default, 30 s on Ubuntu with unattended-upgrades. A save with 40 panes and long scrollback

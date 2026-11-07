@@ -9,6 +9,7 @@ tests/hook-unit.sh          # flag filtering, quoting, pre-typed commands (needs
 tests/agents-unit.sh        # every adapter against a fake /proc
 tests/proc-live.sh          # the process helpers against real processes (/proc, or ps and lsof)
 tests/shutdown-unit.sh      # the save at shutdown, with fake gdbus and tmux
+tests/install-linger.sh     # lingering: on at install, off at uninstall if we turned it on
 tests/restore-race.sh       # two restores at once must restore a 29-window save exactly
 tests/login-replay.sh       # a tmuxinator-style login must restore once
 tests/restore-safety-net.sh # if continuum skips its restore by mistake, tmux-restore restores
