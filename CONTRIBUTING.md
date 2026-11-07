@@ -89,5 +89,12 @@ Rules of thumb:
   the agent in a pane, send one message, save (prefix + Ctrl-s), `tmux kill-server`, start tmux,
   and make sure the same conversation comes back.
 
-You can also keep adapters to yourself: files in `~/.config/tmux-restore/agents/` are loaded
-after the built-in ones, and one with the same name replaces the built-in.
+## Keep an adapter to yourself
+
+An adapter only you need doesn't have to come here. Put it in
+`~/.config/tmux-restore/agents/<name>.sh`: files there are loaded after the built-in ones, and one
+with the same name replaces the built-in.
+
+If your agent only needs to be started again the way it was, with no conversation to look up, it
+doesn't need an adapter. Add its name to tmux-resurrect's list of programs to run again:
+`set -g @resurrect-processes 'my-agent'`.

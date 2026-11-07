@@ -32,4 +32,5 @@ pi hides its command line, so its flags can't be kept.
 ## Another agent
 
 An adapter is one short file in [`agents/`](../agents); see [CONTRIBUTING.md](../CONTRIBUTING.md).
-You can keep your own in `~/.config/tmux-restore/agents/`.
+One you'd rather keep to yourself goes in `~/.config/tmux-restore/agents/`; see
+[keep an adapter to yourself](../CONTRIBUTING.md#keep-an-adapter-to-yourself).

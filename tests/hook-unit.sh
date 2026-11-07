@@ -46,4 +46,9 @@ printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tnpm\t:%s\n' "npm\\ run\\ dev '' 
 main "$D/save"
 check "renamed process: typed as its name" ":TMUX_RESTORE=1 print -rz -- 'npm run dev'" "$(cut -f11 "$D/save")"
 check "tidy leaves real arguments alone" "grep -r foo\\ bar ." "$(tidy "grep -r foo\\ bar .")"
+# a program you list in @resurrect-processes is left as it is, for resurrect to run again
+tmux set -g @resurrect-processes 'my-agent'
+printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tmy-agent\t:%s\n' 'my-agent --resume-last' > "$D/save"
+main "$D/save"
+check "@resurrect-processes: left as it is" ":my-agent --resume-last" "$(cut -f11 "$D/save")"
 echo "passed=$pass failed=$fail"; (( fail == 0 ))
