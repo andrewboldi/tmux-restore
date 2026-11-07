@@ -12,7 +12,10 @@ opencode_variadic_flags="--cors"
 opencode_drop_flags="-c --continue -s --session --fork --prompt"
 
 opencode_match() {
-	[[ $(proc_comm "$1") == opencode ]] && proc_args "$1" || return 1
+	local comm
+	comm=$(proc_comm "$1") || return 1
+	# opencode 2.x ships the native binary as opencode.exe.
+	[[ $comm == opencode || $comm == opencode.exe ]] && proc_args "$1" || return 1
 	# Subcommands aren't the interactive TUI. Any other positional word is the project directory.
 	case $(first_word opencode "${ARGV[@]}") in
 	acp | mcp | attach | run | debug | providers | auth | agent | upgrade | uninstall | serve | web | models | stats | export | import | github | pr | session | plugin | plug | db | completion) return 1 ;;
@@ -34,10 +37,15 @@ opencode_db() {
 }
 
 opencode_session() {
-	local db cwd since id=""
+	local db cwd since id="" dir table
 	if alone_in_cwd "$1" && db=$(opencode_db "$1") && cwd=$(proc_cwd "$1") && since=$(proc_start_epoch "$1"); then
-		id=$(sqlite3 -readonly -cmd ".timeout 2000" "$db" \
-			"SELECT id FROM session WHERE parent_id IS NULL AND directory = '${cwd//\'/\'\'}' AND time_updated >= $((since * 1000)) ORDER BY time_updated DESC LIMIT 1;" 2> /dev/null)
+		dir=${cwd//\'/\'\'}
+		# opencode 2.x stores sessions in session_v2; older versions in session.
+		for table in session_v2 session; do
+			id=$(sqlite3 -readonly -cmd ".timeout 2000" "$db" \
+				"SELECT id FROM $table WHERE parent_id IS NULL AND directory = '$dir' AND time_updated >= $((since * 1000)) ORDER BY time_updated DESC LIMIT 1;" 2> /dev/null)
+			[[ $id == ses_* ]] && break
+		done
 	fi
 	if [[ $id != ses_* ]] && proc_args "$1"; then
 		id=$(flag_value "-s --session" "${ARGV[@]}")
