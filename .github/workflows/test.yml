@@ -13,6 +13,7 @@ jobs:
       - run: shellcheck -x -S warning install.sh tmux-restore.tmux scripts/*.sh agents/*.sh tests/*.sh
       - run: tests/hook-unit.sh
       - run: tests/agents-unit.sh
+      - run: tests/install-linger.sh
       - run: tests/proc-live.sh
       - run: tests/shutdown-unit.sh
 

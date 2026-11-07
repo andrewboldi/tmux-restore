@@ -22,6 +22,8 @@ END="# <<< tmux-restore <<<"
 COMMENTED="#tmux-restore# "
 UNIT=tmux-restore.service
 LABEL=io.github.andrewboldi.tmux-restore
+# Exists if this installer turned on lingering, so that --uninstall turns it off again.
+LINGER_MARK=${XDG_STATE_HOME:-$HOME/.local/state}/tmux-restore/enabled-linger
 
 say() { printf '\033[1;32m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33mwarning:\033[0m %s\n' "$*" >&2; }
@@ -291,9 +293,22 @@ enable_linger() {
 	have loginctl || return 0
 	[ "$(loginctl show-user "$user" -p Linger --value 2> /dev/null)" = yes ] && return 0
 	if loginctl enable-linger > /dev/null 2>&1; then
+		{ mkdir -p "$(dirname "$LINGER_MARK")" && : > "$LINGER_MARK"; } 2> /dev/null || true
 		say "Enabled lingering for $user: the shutdown save keeps running after you log out"
 	else
 		warn "couldn't enable lingering: after you log out, a detached tmux is only saved while a client is attached. Run: sudo loginctl enable-linger $user"
+	fi
+}
+
+# For --uninstall: turn lingering off again, if enable_linger turned it on.
+disable_linger() {
+	[ -e "$LINGER_MARK" ] || return 0
+	if loginctl disable-linger > /dev/null 2>&1; then
+		rm -f "$LINGER_MARK"
+		rmdir "$(dirname "$LINGER_MARK")" 2> /dev/null || true
+		say "Turned lingering back off (the installer had turned it on)"
+	else
+		warn "couldn't turn lingering back off. Run: sudo loginctl disable-linger ${USER:-$(id -un)}"
 	fi
 }
 
@@ -350,6 +365,7 @@ uninstall() {
 		user_systemd && systemctl --user daemon-reload || true
 		say "Removed $UNIT"
 	fi
+	disable_linger
 	if tmux has-session 2> /dev/null; then # give the running server its own hooks back
 		hook=$(tmux show-option -gqv @resurrect-hook-post-save-layout)
 		case $hook in */tmux-restore/scripts/save-hook.sh)
@@ -388,4 +404,5 @@ main() {
 	say "Try it: save with prefix + Ctrl-s, run 'tmux kill-server', then start tmux again."
 }
 
-main "$@"
+# tests/install-linger.sh sources this file for its functions.
+if [ -z "${TMUX_RESTORE_INSTALL_LIB:-}" ]; then main "$@"; fi
