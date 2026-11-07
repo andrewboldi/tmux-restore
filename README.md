@@ -45,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/andrewboldi/tmux-restore/main/insta
 ```
 
 It installs whatever is missing (tmux, TPM, the plugins) and turns everything on. Run it again to
-update.
+update. Rather not run a script? [Install by hand](docs/install-manually.md).
 
 ## How it works
 
