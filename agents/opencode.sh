@@ -7,7 +7,7 @@
 # is written, it uses the session the process was started with (-s), if any.
 
 # shellcheck disable=SC2034 # read by keep_flags and first_word (scripts/lib.sh)
-opencode_value_flags="-m --model -s --session --prompt --agent --port --hostname --mdns-domain --log-level --replay-limit"
+opencode_value_flags="-m --model -s --session --prompt --agent --port --hostname --mdns-domain --log-level --replay-limit --server"
 opencode_variadic_flags="--cors"
 opencode_drop_flags="-c --continue -s --session --fork --prompt"
 
@@ -16,10 +16,17 @@ opencode_match() {
 	comm=$(proc_comm "$1") || return 1
 	# opencode 2.x ships the native binary as opencode.exe.
 	[[ $comm == opencode || $comm == opencode.exe ]] && proc_args "$1" || return 1
-	# Subcommands aren't the interactive TUI. Any other positional word is the project directory.
+	# Subcommands aren't the interactive TUI, except 2.x's mini (see opencode_ui). Any other
+	# positional word is the project directory.
 	case $(first_word opencode "${ARGV[@]}") in
-	acp | mcp | attach | run | debug | providers | auth | agent | upgrade | uninstall | serve | web | models | stats | export | import | github | pr | session | plugin | plug | db | completion) return 1 ;;
+	acp | mcp | attach | run | debug | providers | auth | agent | upgrade | update | uninstall | serve | web | models | stats | export | import | github | pr | session | plugin | plug | db | completion | api | service | reload | pair) return 1 ;;
 	esac
+}
+
+# After proc_args: " mini" if the process runs opencode 2.x's minimal interface, else nothing.
+opencode_ui() {
+	[[ $(first_word opencode "${ARGV[@]}") == mini ]] && printf ' mini'
+	return 0
 }
 
 opencode_db() {
@@ -55,10 +62,10 @@ opencode_session() {
 
 opencode_resume() {
 	proc_args "$1" || return 1
-	printf 'opencode -s %s%s' "$2" "$(keep_flags opencode "${ARGV[@]}")"
+	printf 'opencode%s -s %s%s' "$(opencode_ui)" "$2" "$(keep_flags opencode "${ARGV[@]}")"
 }
 
 opencode_continue() {
 	proc_args "$1" || return 1
-	printf 'opencode -c%s' "$(keep_flags opencode "${ARGV[@]}")"
+	printf 'opencode%s -c%s' "$(opencode_ui)" "$(keep_flags opencode "${ARGV[@]}")"
 }

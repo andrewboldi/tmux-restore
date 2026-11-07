@@ -8,9 +8,9 @@ started with. The initial prompt is never sent again.
 | [Claude Code](https://claude.com/claude-code) | Claude Code's registry of running sessions (`~/.claude/sessions/<pid>.json`). Exact, and it follows `/clear`. | `claude --resume <id> <flags>` | 2.1.316 |
 | [Codex CLI](https://github.com/openai/codex) | The rollout file Codex keeps open (`~/.codex/sessions/…/rollout-…-<id>.jsonl`). Exact. | `codex resume <id> -C <dir> <flags>` | 0.134.0 |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | The newest session of the pane's project that started after the agent did and that you typed in. | `gemini --resume <id> <flags>` | 0.66.0 |
-| [opencode](https://opencode.ai) | The newest session in the agent's directory updated after it started. | `opencode -s <id> <flags>` | 2.2.6 |
+| [opencode](https://opencode.ai) | The newest session in the agent's directory updated after it started. | `opencode -s <id> <flags>`, or `opencode mini -s <id> <flags>` | 1.18.32, 2.2.6 |
 | [pi](https://github.com/badlogic/pi-mono) | The newest session file in the agent's directory written after it started. | `pi --session <file>` | 0.55.0 |
-| [ai-memory](https://github.com/akitaonrails/ai-memory) | The harness child it launches (`ai-memory run opencode`, `... claude`, ...); delegates to that harness's adapter. | `ai-memory run <harness> <same resume command>` | 3.4.3 |
+| [ai-memory](https://github.com/akitaonrails/ai-memory) | The harness child it launches (`ai-memory run opencode`, `... claude`, ...); delegates to that harness's adapter. | `ai-memory run <harness> <same resume command>` | 3.4.3, with opencode and Claude Code |
 
 **Wrappers.** A pane running `ai-memory run <harness>` is recognized: the adapter finds the harness
 child and wraps its resume command in `ai-memory run <harness> ...`, so ai-memory's hooks and MCP

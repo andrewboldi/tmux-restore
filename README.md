@@ -23,8 +23,8 @@
 
 Ever rebooted and lost a dozen tmux windows, along with the agent conversations running in them?
 tmux-restore saves everything every minute and right before shutdown, and puts it back when tmux
-starts. Panes running Claude Code, Codex, Gemini CLI, opencode, pi or ai-memory reopen the
-exact conversation they were in.
+starts. Panes running Claude Code, Codex, Gemini CLI, opencode or pi reopen the exact
+conversation they were in.
 
 <p align="center">
   <img src="assets/demo.gif" alt="A tmux window with Claude Code, vim and a dev server. tmux is killed and started again: the conversation, vim and the layout come back, and the dev server's command waits on the prompt." width="820">
