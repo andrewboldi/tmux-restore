@@ -134,18 +134,23 @@ run_next_hook() {
 	return 0
 }
 
+# ". '<venv>/bin/activate' 2> /dev/null": activates venv $1 in zsh or bash, silently if it's gone.
+activate() {
+	printf ". '%s/bin/activate' 2> /dev/null" "${1//\'/\'\\\'\'}"
+}
+
 main() {
-	local save_file=$1 line cmd target pid i
-	local -a lines out heads cmds keys fields
-	local -A pane_pids count
+	local save_file=$1 line cmd target pid venv i
+	local -a lines out heads cmds keys fields targets
+	local -A pane_pids venvs count
 	# The save folder also gets every pane's scrollback, which can hold secrets: keep it private.
 	chmod 700 "$(dirname "$save_file")" 2> /dev/null
 	load_agents
 	restore_list
 	ZSH=""
 	[[ $(tmux show -gqv default-shell) == */zsh ]] && ZSH=1 # restored panes run default-shell
-	while IFS=$'\t' read -r target pid; do pane_pids[$target]=$pid; done \
-		< <(tmux list-panes -a -F $'#{session_name}:#{window_index}.#{pane_index}\t#{pane_pid}')
+	while IFS=$'\t' read -r target pid venv; do pane_pids[$target]=$pid venvs[$target]=$venv; done \
+		< <(tmux list-panes -a -F $'#{session_name}:#{window_index}.#{pane_index}\t#{pane_pid}\t#{@tmux-restore-venv}')
 
 	mapfile -t lines < "$save_file"
 	for i in "${!lines[@]}"; do
@@ -160,6 +165,7 @@ main() {
 		cmds[i]=$(tidy "${cmd% }")
 		mapfile -td $'\t' fields < <(printf '%s' "${heads[i]}")
 		target="${fields[1]}:${fields[2]}.${fields[5]}"
+		targets[i]=$target
 		rewrite "${pane_pids[$target]:-}" "${cmds[i]}"
 		out[i]="${heads[i]}"$'\t'":$NEW"
 		keys[i]=$KEY
@@ -171,6 +177,22 @@ main() {
 		if [[ -n ${keys[i]} ]] && ((count[${keys[i]}] > 1)); then
 			out[i]="${heads[i]}"$'\t'":$(plain "${cmds[i]}")"
 		fi
+	done
+	# A pane with a Python venv active (scripts/shell-hook.sh records it) activates it again, before
+	# the command tmux-restore wrote for it, or alone if it was idle. A command left for resurrect
+	# to run as it is (vim, htop, ...) stays as it is.
+	for i in "${!targets[@]}"; do
+		venv=${venvs[${targets[i]}]:-}
+		[[ -n $venv && -r $venv/bin/activate ]] || continue
+		cmd=${out[i]#"${heads[i]}"$'\t':}
+		if [[ -z $cmd ]]; then
+			cmd=$MARK$(activate "$venv")
+		elif [[ $cmd == "$MARK"* ]]; then
+			cmd="$MARK$(activate "$venv"); ${cmd#"$MARK"}"
+		else
+			continue
+		fi
+		out[i]="${heads[i]}"$'\t'":$cmd"
 	done
 	((${#out[@]})) && printf '%s\n' "${out[@]}" > "$save_file.tmp" && mv -f "$save_file.tmp" "$save_file"
 	run_next_hook "$save_file"

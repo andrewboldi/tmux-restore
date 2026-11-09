@@ -36,6 +36,23 @@ If the id can't be found, the adapter falls back to the agent's "continue the la
 conversation in this directory" command. If two panes would use that fallback in the same
 directory, they'd both reopen the same conversation, so both get the pre-typed command instead.
 
+### Python virtual environments
+
+The venv a shell has active can't be seen from outside the shell, so a small hook in your
+`~/.zshrc` or `~/.bashrc` ([`scripts/shell-hook.sh`](../scripts/shell-hook.sh)) tells tmux, at
+each prompt, which venv the pane has active. The save hook then puts `. <venv>/bin/activate`
+before the command it writes for that pane, or saves it alone for an idle pane, so the restore
+activates the venv first. A venv deleted in the meantime is skipped without an error. A program
+that tmux-resurrect restarts itself (vim, htop, ...) keeps its command as it is, and comes back
+without the venv.
+
+To turn it on, add this line to `~/.zshrc` or `~/.bashrc` (with plugins in
+`~/.config/tmux/plugins`, use that path):
+
+```sh
+[ -r ~/.tmux/plugins/tmux-restore/scripts/shell-hook.sh ] && . ~/.tmux/plugins/tmux-restore/scripts/shell-hook.sh
+```
+
 ## Saving at shutdown
 
 On Linux with systemd, [`tmux-restore.service`](../systemd/tmux-restore.service) runs
@@ -96,6 +113,7 @@ three seconds after the server did, tmux-restore runs it, under continuum's othe
 | [`install.sh`](../install.sh) | installs everything and edits your tmux config (`--uninstall` undoes it) |
 | [`tmux-restore.tmux`](../tmux-restore.tmux) | the plugin: sets the options above |
 | [`scripts/save-hook.sh`](../scripts/save-hook.sh) | rewrites saved commands |
+| [`scripts/shell-hook.sh`](../scripts/shell-hook.sh) | tells tmux which Python venv each pane has active |
 | [`scripts/lib.sh`](../scripts/lib.sh) | process inspection (`/proc`, or `ps`/`lsof`) and flag filtering |
 | [`agents/*.sh`](../agents) | one adapter per agent |
 | [`scripts/shutdown-save.sh`](../scripts/shutdown-save.sh) | the save at shutdown (Linux) |

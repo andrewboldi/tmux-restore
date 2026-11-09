@@ -14,6 +14,7 @@ tests/restore-race.sh       # two restores at once must restore a 29-window save
 tests/login-replay.sh       # a tmuxinator-style login must restore once
 tests/restore-safety-net.sh # if continuum skips its restore by mistake, tmux-restore restores
 tests/restore-lock-release.sh # a finished restore releases its lock
+tests/venv-restore.sh       # a pane's Python venv comes back, with zsh and bash (needs uv or python3)
 tests/install-containers.sh # the installer on fresh Ubuntu, Debian, Fedora and Arch (docker or podman)
 ```
 

@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq tmux
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq tmux zsh
       - name: Plugins
         run: |
           mkdir -p ~/.tmux/plugins && cd ~/.tmux/plugins
@@ -33,6 +33,7 @@ jobs:
       - run: tests/login-replay.sh
       - run: tests/restore-lock-release.sh bg-hook
       - run: tests/restore-safety-net.sh
+      - run: tests/venv-restore.sh
 
   install:
     runs-on: ubuntu-latest

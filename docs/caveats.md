@@ -24,6 +24,12 @@ a pre-typed command.
 **Pre-typed commands need zsh.** With another shell, a command that isn't safe to re-run comes
 back as an empty prompt.
 
+**Python venvs come back only with zsh or bash,** and only once you add
+[one line](how-it-works.md#python-virtual-environments) to `~/.zshrc` or `~/.bashrc`. A pane
+running a program that tmux-resurrect restarts itself (vim, htop, ...) comes back without its
+venv; so does a pane with bash whose command isn't safe to re-run. conda environments aren't
+restored.
+
 **Same agent, same directory.** Gemini CLI, opencode and pi don't record which process has which
 conversation open, so tmux-restore tells their panes apart by directory and start time. Two panes
 running the same one of them in the same directory come back as commands typed on the prompt,

@@ -69,4 +69,11 @@ mkdir -m 755 "$D/resurrect"
 printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tzsh\t:\n' > "$D/resurrect/save"
 main "$D/resurrect/save"
 check "save folder: private" "$D/resurrect" "$(find "$D/resurrect" -maxdepth 0 -perm 700)"
+# the venv a pane has active is a pane option (scripts/shell-hook.sh sets it)
+mkdir -p "$D/venv/bin" && : > "$D/venv/bin/activate"
+target=$(tmux list-panes -F '#{session_name}	#{window_index}	#{pane_index}' | head -1)
+tmux set-option -p -t "$(printf '%s:%s.%s' $target)" @tmux-restore-venv "$D/venv"
+printf 'pane\t%s\t%s\t1\t:*\t%s\tzsh\t:/tmp\t1\tzsh\t:\n' $target > "$D/save"
+main "$D/save"
+check "venv: read from the pane option" ":TMUX_RESTORE=1 . '$D/venv/bin/activate' 2> /dev/null" "$(cut -f11 "$D/save")"
 echo "passed=$pass failed=$fail"; (( fail == 0 ))

@@ -116,13 +116,22 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/io.github.andrewboldi.tm
 The watcher saves when macOS announces a logout, restart or shutdown. The `LANG` line matters:
 without a UTF-8 locale, the saves come out empty.
 
-## 4. Try it
+## 4. Python venvs
+
+To have each pane's active venv come back, add this line to `~/.zshrc` or `~/.bashrc`:
+
+```sh
+[ -r ~/.tmux/plugins/tmux-restore/scripts/shell-hook.sh ] && . ~/.tmux/plugins/tmux-restore/scripts/shell-hook.sh
+```
+
+## 5. Try it
 
 Save with prefix + Ctrl-s, run `tmux kill-server`, then start tmux again.
 
 ## Uninstall
 
-- Remove the lines from `~/.tmux.conf` and delete `~/.tmux/plugins/tmux-restore`.
+- Remove the lines from `~/.tmux.conf` (and the venv line from `~/.zshrc` or `~/.bashrc`), and
+  delete `~/.tmux/plugins/tmux-restore`.
 - Linux: `systemctl --user disable --now tmux-restore.service`, then delete
   `~/.config/systemd/user/tmux-restore.service`. If you turned on lingering only for this,
   `loginctl disable-linger`.

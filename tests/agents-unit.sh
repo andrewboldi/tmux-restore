@@ -270,6 +270,33 @@ pane 0 100 "ai-memory status"
 run
 check "ai-memory: not 'run' isn't the TUI"       "TMUX_RESTORE=1 print -rz -- 'ai-memory status'" "${GOT[0]}"
 
+# --- Python virtual environments (scripts/shell-hook.sh records each pane's) -----------------
+# venv WINDOW PATH: the pane in WINDOW has the venv at PATH active
+venv() { PANES[$1]+=$'\t'"$2"; }
+reset
+V="$D/my proj's/.venv"
+mkdir -p "$V/bin" && : > "$V/bin/activate"
+A="TMUX_RESTORE=1 . '$D/my proj'\\''s/.venv/bin/activate' 2> /dev/null"
+mkproc 100 1 /w/a 10 /usr/bin/zsh; mkproc 101 100 /w/a 5000 claude; claude_registry 101 S1 5000
+mkproc 200 1 /w/d 10 /usr/bin/zsh; mkproc 201 200 /w/d 5300 claude --model opus # not registered
+mkproc 300 1 /w/d 10 /usr/bin/zsh; mkproc 301 300 /w/d 5400 claude --model opus # same dir as 201
+mkproc 400 1 /w/g 10 /usr/bin/zsh; mkproc 401 400 /w/g 5600 vim notes.txt
+mkproc 500 1 /w/h 10 /usr/bin/zsh
+mkproc 600 1 /w/i 10 /usr/bin/zsh
+pane 0 100 "claude"; pane 1 200 "claude --model opus"; pane 2 300 "claude --model opus"
+pane 3 400 "vim notes.txt"; pane 4 500 ""; pane 5 600 ""
+venv 0 "$V"; venv 1 "$V"; venv 3 "$V"; venv 4 "$V"; venv 5 "$D/deleted/.venv"
+run
+check "venv: before the agent"                 "$A; claude --resume S1"                            "${GOT[0]}"
+check "venv: before a same-dir fallback"       "$A; print -rz -- 'claude --model opus'"            "${GOT[1]}"
+check "venv: only in its own pane"             "TMUX_RESTORE=1 print -rz -- 'claude --model opus'" "${GOT[2]}"
+check "venv: safe program left to resurrect"   "vim notes.txt"                                     "${GOT[3]}"
+check "venv: idle shell"                       "$A"                                                "${GOT[4]}"
+check "venv: deleted since it was activated"   ""                                                  "${GOT[5]}"
+SHELL_PATH=/bin/bash run
+check "venv (bash): idle shell"                "$A"                                                "${GOT[4]}"
+check "venv (bash): command left unchanged"    "claude --model opus"                               "${GOT[1]}"
+
 # --- your own adapter, and a hook you already had --------------------------------------------
 reset
 mkdir -p "$XDG_CONFIG_HOME/tmux-restore/agents"
