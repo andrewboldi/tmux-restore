@@ -16,7 +16,7 @@ set -u
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 source "$ROOT/scripts/lib.sh"
 MARK="TMUX_RESTORE=1 "
-AGENTS=()
+AGENTS=() RESTORE_LIST=()
 
 # Source agents/*.sh, then yours from ~/.config/tmux-restore/agents/ (the same name replaces ours).
 load_agents() {
@@ -37,14 +37,32 @@ prefill() {
 	printf "print -rz -- '%s'" "${1//\'/\'\\\'\'}"
 }
 
-# Programs resurrect re-runs, as " a b c ": its defaults plus @resurrect-processes, minus ~patterns.
-safe_programs() {
-	local list entry
+# RESTORE_LIST: the entries resurrect picks programs to restart by, its defaults plus
+# @resurrect-processes.
+restore_list() {
+	local list
 	list=$(tmux show -gqv @resurrect-default-processes)
 	list="${list:-vi vim view nvim emacs man less more tail top htop irssi weechat mutt} $(tmux show -gqv @resurrect-processes)"
-	eval "set -- $list"
-	printf ' '
-	for entry; do [[ $entry == '~'* ]] || printf '%s ' "$entry"; done
+	eval "RESTORE_LIST=($list)"
+}
+
+# safe CMD: resurrect restarts CMD by itself, so it's left as it is. By resurrect's own rules,
+# "a b" matches a command starting with "a b", "x->y" matches by its x, and "~x" matches x
+# anywhere. A ~pattern counts only with "->": resurrect relaunches those anyway, taking their
+# arguments from the saved command, which must stay as it was. A plain ~pattern comes back typed.
+safe() {
+	local entry match re1 re2
+	for entry in "${RESTORE_LIST[@]}"; do
+		match=${entry%%->*}
+		if [[ $match == '~'* ]]; then
+			[[ $entry == *'->'* ]] || continue
+			re1="(${match#\~})" re2=$re1
+		else
+			re1="(^$match )" re2="(^$match\$)"
+		fi
+		[[ $1 =~ $re1 || $1 =~ $re2 ]] && return 0
+	done
+	return 1
 }
 
 # "systemd-run ... MemoryMax=N " when PID runs in a memory-capped systemd scope
@@ -70,7 +88,7 @@ tidy() {
 # What to save for a command that isn't an agent's conversation.
 plain() {
 	local cmd=$1
-	if [[ -n $cmd && -n $ZSH && $SAFE != *" ${cmd%% *} "* ]]; then
+	if [[ -n $cmd && -n $ZSH ]] && ! safe "$cmd"; then
 		printf '%s%s' "$MARK" "$(prefill "$cmd")"
 	else
 		printf '%s' "$cmd"
@@ -123,7 +141,7 @@ main() {
 	# The save folder also gets every pane's scrollback, which can hold secrets: keep it private.
 	chmod 700 "$(dirname "$save_file")" 2> /dev/null
 	load_agents
-	SAFE=$(safe_programs)
+	restore_list
 	ZSH=""
 	[[ $(tmux show -gqv default-shell) == */zsh ]] && ZSH=1 # restored panes run default-shell
 	while IFS=$'\t' read -r target pid; do pane_pids[$target]=$pid; done \

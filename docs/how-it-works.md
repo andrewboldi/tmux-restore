@@ -16,6 +16,11 @@ working directories and scrollback, plus each pane's full command line. Then res
 | A safe program (vim, htop, less, ...) | unchanged | it restarts |
 | Anything else (`make deploy`, a dev server) | `print -rz -- '<command>'` | the command is typed on the zsh prompt, waiting for Enter |
 
+A safe program is one tmux-resurrect restarts by itself, by its own rules: one of its defaults,
+or a match for an entry in your `@resurrect-processes`. An entry `"git log"` matches commands
+that start with `git log`, and `"btop->btop --utf-force"` matches `btop`. A `"~pattern"` entry
+counts only if it has a `->`; otherwise its commands come back typed.
+
 The initial prompt and the flags that pick a conversation (`--continue`, `--resume`, ...) are
 dropped from an agent's command. A rewritten command starts with `TMUX_RESTORE=1 `, and
 tmux-restore adds that prefix to resurrect's list of programs to re-run. With a shell other than

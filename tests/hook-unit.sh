@@ -51,6 +51,19 @@ tmux set -g @resurrect-processes 'my-agent'
 printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tmy-agent\t:%s\n' 'my-agent --resume-last' > "$D/save"
 main "$D/save"
 check "@resurrect-processes: left as it is" ":my-agent --resume-last" "$(cut -f11 "$D/save")"
+# ...matched by resurrect's own rules: "a b" matches commands that start with "a b", "x->y" matches
+# x, and "~x->y" matches x anywhere. A plain "~pattern" still comes back typed.
+tmux set -g @resurrect-processes '"btop->btop --utf-force" "git log" "~rails server->rails server *" "~npm run dev"'
+printf 'pane\tmain\t0\t1\t:*\t%s\tzsh\t:/tmp\t1\t%s\t:%s\n' 0 btop btop 1 git 'git log --oneline' 2 git 'git push' \
+	3 topgrade topgrade 4 bundle 'bundle exec rails server -p 3001' 5 npm 'npm run dev' > "$D/save"
+main "$D/save"
+got() { sed -n "$1p" "$D/save" | cut -f11; }
+check "@resurrect-processes: x->y matches x"            ":btop"                                   "$(got 1)"
+check "@resurrect-processes: \"git log\" matches"       ":git log --oneline"                      "$(got 2)"
+check "@resurrect-processes: \"git log\" isn't all git" ":TMUX_RESTORE=1 print -rz -- 'git push'" "$(got 3)"
+check "@resurrect-processes: top isn't topgrade"      ":TMUX_RESTORE=1 print -rz -- 'topgrade'" "$(got 4)"
+check "@resurrect-processes: ~x->y left for resurrect"  ":bundle exec rails server -p 3001"       "$(got 5)"
+check "@resurrect-processes: plain ~pattern typed"      ":TMUX_RESTORE=1 print -rz -- 'npm run dev'" "$(got 6)"
 # the save folder also holds every pane's scrollback, so the hook makes it private
 mkdir -m 755 "$D/resurrect"
 printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tzsh\t:\n' > "$D/resurrect/save"
