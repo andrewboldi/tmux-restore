@@ -24,6 +24,9 @@ mkvenv() { if command -v uv > /dev/null; then uv venv -q "$1"; else python3 -m v
 V="$D/my proj's/.venv" GONE="$D/gone/.venv"
 q() { printf "'%s'" "${1//\'/\'\\\'\'}"; } # single-quoted for zsh and bash
 hook="$D/plugins/tmux-restore/scripts/shell-hook.sh"
+# Only these startup files: a system's own can stop at a question (on GitHub's runners, compinit
+# asks about "insecure directories"), which would swallow the keys this test types.
+echo 'unsetopt GLOBAL_RCS' > "$D/home/.zshenv"
 printf '%s\n' "PS1='$ '" ". $(q "$hook")" > "$D/home/.zshrc"
 printf '%s\n' "PS1='$ '" ". $(q "$hook")" > "$D/home/.bashrc"
 echo '. ~/.bashrc' > "$D/home/.bash_profile" # tmux-resurrect starts bash as a login shell
