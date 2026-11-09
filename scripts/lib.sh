@@ -175,8 +175,10 @@ proc_ppid() {
 	fi
 }
 
-# alone_in_cwd PID: no other process of the same program (by proc_name) works in PID's
-# directory, not counting PID's own parent and children (a wrapper, a relaunched child).
+# alone_in_cwd PID [MATCH]: no other process of the same program (by proc_name) works in PID's
+# directory, not counting PID's own parent and children (a wrapper, a relaunched child). With
+# MATCH, an adapter's match function, only processes it accepts count: opencode 2.x runs a
+# background server, often in ~, that has no conversation open.
 # Adapters that can only tell sessions apart by directory use this, so they never pick the same
 # session for two panes.
 alone_in_cwd() {
@@ -185,7 +187,9 @@ alone_in_cwd() {
 	parent=$(proc_ppid "$1")
 	for p in $(procs_named "$comm"); do
 		[[ $p == "$1" || $p == "$parent" || $(proc_ppid "$p") == "$1" ]] && continue
-		[[ $(proc_name "$p") == "$name" && $(proc_cwd "$p") == "$cwd" ]] && return 1
+		[[ $(proc_name "$p") == "$name" && $(proc_cwd "$p") == "$cwd" ]] || continue
+		[[ -z ${2:-} ]] || ("$2" "$p") || continue # a subshell: match functions set ARGV
+		return 1
 	done
 	return 0
 }

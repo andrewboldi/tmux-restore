@@ -131,7 +131,7 @@ reset
 mkdir -p "$D/data/opencode"
 sqlite3 "$D/data/opencode/opencode.db" "CREATE TABLE session_v2 (id TEXT, parent_id TEXT, directory TEXT, time_updated INTEGER);
 	INSERT INTO session_v2 VALUES ('ses_V2', NULL, '/w/v', 1700000100000), ('ses_M1', NULL, '/w/m', 1700000100000),
-		('ses_S1', NULL, '/w/s', 1700000100000);"
+		('ses_S1', NULL, '/w/s', 1700000100000), ('ses_H1', NULL, '/w/h', 1700000100000);"
 E="XDG_DATA_HOME=$D/data"
 mkproc 100 1 /w/v 10 /usr/bin/zsh; ENVIRON=$E mkproc 101 100 /w/v 5000 /opt/opencode/bin/opencode.exe
 mkproc 200 1 /w/m 10 /usr/bin/zsh; ENVIRON=$E mkproc 201 200 /w/m 5000 opencode mini --model x
@@ -139,8 +139,11 @@ mkproc 300 1 /w/q 10 /usr/bin/zsh; ENVIRON=$E mkproc 301 300 /w/q 5000 opencode 
 mkproc 400 1 /w/s 10 /usr/bin/zsh; ENVIRON=$E mkproc 401 400 /w/s 5000 opencode --server http://localhost:4096
 mkproc 500 1 /w/n 10 /usr/bin/zsh; ENVIRON=$E mkproc 501 500 /w/n 5000 opencode service status
 mkproc 600 1 /w/p 10 /usr/bin/zsh; ENVIRON=$E mkproc 601 600 /w/p 5000 opencode pair
+mkproc 700 1 /w/h 10 /usr/bin/zsh; ENVIRON=$E mkproc 701 700 /w/h 5000 opencode
+ENVIRON=$E mkproc 900 1 /w/h 4000 opencode serve --service # 2.x's background server, started in ~
 pane 0 100 "opencode.exe"; pane 1 200 "opencode mini --model x"; pane 2 300 "opencode mini"
 pane 3 400 "opencode --server http://localhost:4096"; pane 4 500 "opencode service status"; pane 5 600 "opencode pair"
+pane 6 700 "opencode"
 run
 check "opencode: 2.x session_v2"                 "TMUX_RESTORE=1 opencode -s ses_V2"                    "${GOT[0]}"
 check "opencode: mini comes back as mini"        "TMUX_RESTORE=1 opencode mini -s ses_M1 --model x"     "${GOT[1]}"
@@ -148,6 +151,7 @@ check "opencode: mini, nothing yet -> mini -c"   "TMUX_RESTORE=1 opencode mini -
 check "opencode: --server keeps its URL"         "TMUX_RESTORE=1 opencode -s ses_S1 --server http://localhost:4096" "${GOT[3]}"
 check "opencode: 'service' isn't the TUI"        "TMUX_RESTORE=1 print -rz -- 'opencode service status'" "${GOT[4]}"
 check "opencode: 'pair' isn't the TUI"           "TMUX_RESTORE=1 print -rz -- 'opencode pair'"          "${GOT[5]}"
+check "opencode: the 2.x server isn't another TUI" "TMUX_RESTORE=1 opencode -s ses_H1"                   "${GOT[6]}"
 
 # --- pi ---------------------------------------------------------------------------------------
 reset

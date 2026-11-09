@@ -45,7 +45,7 @@ opencode_db() {
 
 opencode_session() {
 	local db cwd since id="" dir table
-	if alone_in_cwd "$1" && db=$(opencode_db "$1") && cwd=$(proc_cwd "$1") && since=$(proc_start_epoch "$1"); then
+	if alone_in_cwd "$1" opencode_match && db=$(opencode_db "$1") && cwd=$(proc_cwd "$1") && since=$(proc_start_epoch "$1"); then
 		dir=${cwd//\'/\'\'}
 		# opencode 2.x stores sessions in session_v2; older versions in session.
 		for table in session_v2 session; do
