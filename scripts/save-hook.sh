@@ -120,6 +120,8 @@ main() {
 	local save_file=$1 line cmd target pid i
 	local -a lines out heads cmds keys fields
 	local -A pane_pids count
+	# The save folder also gets every pane's scrollback, which can hold secrets: keep it private.
+	chmod 700 "$(dirname "$save_file")" 2> /dev/null
 	load_agents
 	SAFE=$(safe_programs)
 	ZSH=""

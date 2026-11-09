@@ -8,6 +8,12 @@ Without them, the installer says so and the minute-by-minute save still runs.
 
 **Power loss and crashes** lose up to a minute: whatever happened since the last save.
 
+**Scrollback is saved to disk.** To bring scrollback back, tmux-resurrect saves every pane's
+contents every minute, in its save folder (usually `~/.local/share/tmux/resurrect`).
+tmux-restore makes that folder readable only by you. Whatever a pane showed goes in, a password
+or token included. To stop saving it, add `set -g @resurrect-capture-pane-contents 'off'` to
+your tmux config, then delete `pane_contents.tar.gz` from that folder.
+
 **Programs restart; they aren't checkpointed.** An agent gets its conversation back, not a tool
 call or command it was running at the time.
 

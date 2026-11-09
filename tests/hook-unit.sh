@@ -51,4 +51,9 @@ tmux set -g @resurrect-processes 'my-agent'
 printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tmy-agent\t:%s\n' 'my-agent --resume-last' > "$D/save"
 main "$D/save"
 check "@resurrect-processes: left as it is" ":my-agent --resume-last" "$(cut -f11 "$D/save")"
+# the save folder also holds every pane's scrollback, so the hook makes it private
+mkdir -m 755 "$D/resurrect"
+printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tzsh\t:\n' > "$D/resurrect/save"
+main "$D/resurrect/save"
+check "save folder: private" "$D/resurrect" "$(find "$D/resurrect" -maxdepth 0 -perm 700)"
 echo "passed=$pass failed=$fail"; (( fail == 0 ))
