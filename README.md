@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="#what-it-does">What it does</a> ·
+  <a href="#what-it-adds-to-tmux-resurrect">What it adds</a> ·
   <a href="#install">Install</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="docs/agents.md">Agents</a> ·
@@ -30,13 +30,24 @@ conversation they were in.
   <img src="assets/demo.gif" alt="A tmux window with Claude Code, vim and a dev server. tmux is killed and started again: the conversation, vim and the layout come back, and the dev server's command waits on the prompt." width="820">
 </p>
 
-## What it does
+## What it adds to tmux-resurrect
 
-- **Everything comes back.** Sessions, windows, splits, working directories and scrollback.
-- **Agents resume mid-conversation.** Each one reopens its own conversation, with the same flags.
-- **Saved at shutdown, not just on a timer.** Every minute, plus once more as the machine goes down.
-- **Nothing risky re-runs.** Editors and monitors restart. Anything else (a deploy, a dev server)
-  comes back typed on the prompt, waiting for Enter.
+tmux-restore runs on top of [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect) and
+[tmux-continuum](https://github.com/tmux-plugins/tmux-continuum), which bring back sessions,
+windows, splits, working directories and scrollback. It adds:
+
+- **Agents resume mid-conversation.** Each pane reopens its own conversation, with the same
+  flags. [Supported agents](docs/agents.md)
+- **Saved at shutdown, not just on a timer.** Every minute (continuum's default is 15), plus once
+  more as the machine goes down. A crash or power cut loses at most the last minute.
+- **The rest comes back typed, not lost.** Editors, monitors and whatever you list in
+  `@resurrect-processes` restart. With zsh, any other command (a deploy, a dev server) waits on
+  the prompt for Enter, where tmux-resurrect alone leaves an empty shell.
+- **Python venvs come back,** once you add
+  [one line](docs/how-it-works.md#python-virtual-environments) to `~/.zshrc` or `~/.bashrc`.
+
+Scrollback is saved to disk, so anything a pane showed, a password included, sits in a folder
+only you can read. To not save it, add `set -g @resurrect-capture-pane-contents 'off'`.
 
 ## Install
 
@@ -47,19 +58,21 @@ curl -fsSL https://raw.githubusercontent.com/andrewboldi/tmux-restore/main/insta
 It installs whatever is missing (tmux, TPM, the plugins) and turns everything on. Run it again to
 update. Rather not run a script? [Install by hand](docs/install-manually.md).
 
+**Already using tmux-resurrect and tmux-continuum?** Keep them: your settings, your list of
+programs to restart and your saves carry over. The installer switches tmux-resurrect to
+[a fork](https://github.com/andrewboldi/tmux-resurrect/tree/fix-concurrent-restore) that lets only
+one restore run at a time
+([proposed upstream](https://github.com/tmux-plugins/tmux-resurrect/pull/600)).
+
 ## How it works
 
-1. **Save.** Every minute, [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect)
-   records every session, window, pane and its scrollback.
-2. **Rewrite.** For each pane running an agent, a small adapter finds the conversation's id in
-   the agent's own session files and saves the command that resumes it.
-3. **Shutdown.** A background service (systemd on Linux, launchd on macOS) saves once more the
-   moment the machine starts going down.
-4. **Restore.** When tmux starts, [tmux-continuum](https://github.com/tmux-plugins/tmux-continuum)
-   puts it all back, and the agents reopen their conversations.
+tmux-resurrect saves each pane and its command. For an agent's pane, a small adapter finds the
+conversation's id in the agent's own session files and saves the command that resumes it instead.
+A background service (systemd on Linux, launchd on macOS) makes the save at shutdown. More in
+[how it works](docs/how-it-works.md).
 
-More in [how it works](docs/how-it-works.md). Using another agent? An adapter is one short file;
-see [CONTRIBUTING.md](CONTRIBUTING.md).
+Using another agent? An adapter is one short file. Send it in ([CONTRIBUTING.md](CONTRIBUTING.md)),
+or keep it to yourself in `~/.config/tmux-restore/agents/`.
 
 ## License
 
