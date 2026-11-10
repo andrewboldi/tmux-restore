@@ -64,6 +64,41 @@ check "@resurrect-processes: \"git log\" isn't all git" ":TMUX_RESTORE=1 print -
 check "@resurrect-processes: top isn't topgrade"      ":TMUX_RESTORE=1 print -rz -- 'topgrade'" "$(got 4)"
 check "@resurrect-processes: ~x->y left for resurrect"  ":bundle exec rails server -p 3001"       "$(got 5)"
 check "@resurrect-processes: plain ~pattern typed"      ":TMUX_RESTORE=1 print -rz -- 'npm run dev'" "$(got 6)"
+# a program you list wins over tmux-restore's own: left as it is, for resurrect to run
+tmux set -g @resurrect-processes '"journalctl -f"'
+printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tjournalctl\t:%s\n' 'journalctl -f -u nginx' > "$D/save"
+main "$D/save"
+check "@resurrect-processes: wins over restartable" ":journalctl -f -u nginx" "$(got 1)"
+tmux set -g @resurrect-processes ''
+# monitors and commands that follow logs restart with any shell, though resurrect doesn't list
+# them; commands that only look like them don't
+restarts=('nvtop' 'iotop -o' 'nethogs wlan0' 'journalctl -f' 'journalctl -fu nginx' 'journalctl -u nginx -f'
+	'journalctl -xef' 'journalctl --follow -n 50' 'journalctl -u my\ unit -f' 'docker logs -f web'
+	'docker logs web --follow' 'docker logs -tf web' 'docker compose logs -f' 'docker-compose logs -f api'
+	'kubectl logs -f deploy/api' 'kubectl logs api-0 -n prod -f')
+not_restarted=('kubectl apply -f x.yaml' 'kubectl delete -f x.yaml' 'kubectl -n logs delete -f x.yaml'
+	'kubectl -n prod logs -f api' 'docker rm -f web' 'docker compose -f prod.yml up' 'journalctl --vacuum-size=1G'
+	'journalctl -u nginx' 'journalctl -F _SYSTEMD_UNIT' 'journalctl-upload -f' 'sudo iotop' 'nvtopx' 'make -f ci.mk')
+for shell in zsh bash; do
+	tmux set -g default-shell "$(command -v "$shell")"
+	n=0
+	for cmd in "${restarts[@]}" "${not_restarted[@]}"; do
+		printf 'pane\tmain\t0\t1\t:*\t%s\tzsh\t:/tmp\t1\t%s\t:%s\n' "$n" "${cmd%% *}" "$cmd"
+		n=$((n + 1))
+	done > "$D/save"
+	main "$D/save"
+	n=0
+	for cmd in "${restarts[@]}"; do
+		n=$((n + 1))
+		check "restarts ($shell): $cmd" ":TMUX_RESTORE=1 $cmd" "$(got $n)"
+	done
+	for cmd in "${not_restarted[@]}"; do
+		n=$((n + 1))
+		[[ $shell == zsh ]] && want=":TMUX_RESTORE=1 $(prefill "$cmd")" || want=":$cmd"
+		check "not restarted ($shell): $cmd" "$want" "$(got $n)"
+	done
+done
+tmux set -g default-shell "$(command -v zsh)"
 # the save folder also holds every pane's scrollback, so the hook makes it private
 mkdir -m 755 "$D/resurrect"
 printf 'pane\tmain\t0\t1\t:*\t0\tzsh\t:/tmp\t1\tzsh\t:\n' > "$D/resurrect/save"

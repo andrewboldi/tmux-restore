@@ -40,9 +40,9 @@ windows, splits, working directories and scrollback. It adds:
   flags. [Supported agents](docs/agents.md)
 - **Saved at shutdown, not just on a timer.** Every minute (continuum's default is 15), plus once
   more as the machine goes down. A crash or power cut loses at most the last minute.
-- **The rest comes back typed, not lost.** Editors, monitors and whatever you list in
-  `@resurrect-processes` restart. With zsh, any other command (a deploy, a dev server) waits on
-  the prompt for Enter, where tmux-resurrect alone leaves an empty shell.
+- **The rest comes back typed, not lost.** Editors, monitors, log followers (`tail -f`,
+  `journalctl -f`, `kubectl logs -f`) and whatever you list in `@resurrect-processes` restart.
+  With zsh, anything else waits on the prompt for Enter, where tmux-resurrect leaves an empty shell.
 - **Python venvs come back,** once you add
   [one line](docs/how-it-works.md#python-virtual-environments) to `~/.zshrc` or `~/.bashrc`.
 

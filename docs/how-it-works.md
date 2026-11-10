@@ -14,12 +14,19 @@ working directories and scrollback, plus each pane's full command line. Then res
 |---|---|---|
 | A coding agent | the agent's resume command, e.g. `claude --resume <id> --model opus` | the same conversation reopens, with the same flags |
 | A safe program (vim, htop, less, ...) | unchanged | it restarts |
+| A monitor or log follower resurrect doesn't list (`nvtop`, `journalctl -f`, `kubectl logs -f`, ...) | `TMUX_RESTORE=1 <command>` | it restarts, with any shell |
 | Anything else (`make deploy`, a dev server) | `print -rz -- '<command>'` | the command is typed on the zsh prompt, waiting for Enter |
 
 A safe program is one tmux-resurrect restarts by itself, by its own rules: one of its defaults,
 or a match for an entry in your `@resurrect-processes`. An entry `"git log"` matches commands
 that start with `git log`, and `"btop->btop --utf-force"` matches `btop`. A `"~pattern"` entry
 counts only if it has a `->`; otherwise its commands come back typed.
+
+tmux-restore restarts a few more programs that are safe to run again: the monitors `nvtop`,
+`iotop` and `nethogs`, and `journalctl`, `docker logs`, `docker compose logs` and `kubectl logs`
+when they follow logs (`-f`, `--follow`, or a group of short flags with `f` in it, like `-fu`).
+`logs` has to come right after the program name, so `kubectl -n prod logs -f` comes back typed.
+So does anything run with `sudo`, which would ask for a password.
 
 The initial prompt and the flags that pick a conversation (`--continue`, `--resume`, ...) are
 dropped from an agent's command. A rewritten command starts with `TMUX_RESTORE=1 `, and
