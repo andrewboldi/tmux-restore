@@ -1,7 +1,8 @@
 # shellcheck shell=bash
-# tmux-restore's shell hook, for zsh and bash. Source it from ~/.zshrc or ~/.bashrc (the
-# installer does). At each prompt it tells tmux which Python virtual environment this pane has
-# active, so that a restore activates it again. tmux only hears from it when that changes.
+# tmux-restore's shell hook, for zsh and bash. Source it from ~/.zshrc or ~/.bashrc (the line to
+# add is in docs/how-it-works.md). At each prompt it tells tmux which Python virtual environment
+# this pane has active, so that a restore activates it again. tmux only hears from it when that
+# changes.
 if [ -n "${TMUX_PANE:-}" ]; then
 	_tmux_restore_venv() {
 		local last_status=$? # handed back, for prompts that show the last exit status
