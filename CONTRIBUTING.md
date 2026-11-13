@@ -56,6 +56,10 @@ acme_resume() {
 # directory. Used when the id can't be found, and skipped when two panes would share it.
 acme_continue() { printf 'acme --continue'; }
 
+# Optional. <name>_restart PID: print a command that starts PID again as it was, when PID isn't
+# a conversation but should come back running (like Claude Code's Remote Control). Tried first.
+acme_restart() { proc_args "$1" && [[ ${ARGV[0]:-} == serve ]] && printf 'acme serve'; }
+
 # Set this if <name>_session is exact, never a guess. Then two panes on one conversation both
 # come back on it; for a guess they'd come back typed on the prompt instead.
 acme_exact=1

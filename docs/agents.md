@@ -34,6 +34,11 @@ always exact.
 **Flags.** Flags that pick a conversation (`--continue`, `--resume`, `-s`, ...) are replaced.
 pi hides its command line, so its flags can't be kept.
 
+**Remote Control and other subcommands.** A pane running Claude Code's Remote Control
+(`claude rc`) comes back running it again, with the same arguments. Other subcommands
+(`claude mcp serve`, `claude attach`, ...) aren't conversations, so they're saved like any other
+command: typed on the prompt, with zsh.
+
 ## Another agent
 
 An adapter is one short file in [`agents/`](../agents); see [CONTRIBUTING.md](../CONTRIBUTING.md).

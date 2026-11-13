@@ -99,6 +99,24 @@ run
 check "claude: one conversation in two panes (1)" "TMUX_RESTORE=1 claude --resume S1"                "${GOT[0]}"
 check "claude: one conversation in two panes (2)" "TMUX_RESTORE=1 claude --resume S1"                "${GOT[1]}"
 
+reset # subcommands aren't conversations: Remote Control starts again as it was, the rest are saved as they are
+mkproc 100 1 /w/a 10 /usr/bin/zsh; mkproc 101 100 /w/a 5000 claude rc --name 'my box'
+mkproc 200 1 /w/a 10 /usr/bin/zsh; mkproc 201 200 /w/a 5100 claude remote-control
+mkproc 300 1 /w/c 10 /usr/bin/zsh; mkproc 301 300 /w/c 5200 claude mcp serve
+mkproc 400 1 /w/d 10 /usr/bin/zsh; mkproc 401 400 /w/d 5300 claude purge /w/d
+mkproc 500 1 /w/e 10 /usr/bin/zsh; mkproc 501 500 /w/e 5400 claude --debug mcp; claude_registry 501 S5 5400
+pane 0 100 "claude rc --name my\\ box"; pane 1 200 "claude remote-control"; pane 2 300 "claude mcp serve"
+pane 3 400 "claude purge /w/d"; pane 4 500 "claude --debug mcp"
+run
+check "claude: Remote Control starts again"      "TMUX_RESTORE=1 claude rc --name my\\ box"           "${GOT[0]}"
+check "claude: two in one directory, no clash"   "TMUX_RESTORE=1 claude remote-control"              "${GOT[1]}"
+check "claude: another subcommand is typed"      "TMUX_RESTORE=1 print -rz -- 'claude mcp serve'"    "${GOT[2]}"
+check "claude: purge isn't run again"            "TMUX_RESTORE=1 print -rz -- 'claude purge /w/d'"   "${GOT[3]}"
+check "claude: a flag's value isn't a subcommand" "TMUX_RESTORE=1 claude --resume S5 --debug mcp"    "${GOT[4]}"
+SHELL_PATH=/bin/bash run
+check "bash: Remote Control starts again"        "TMUX_RESTORE=1 claude rc --name my\\ box"           "${GOT[0]}"
+check "bash: another subcommand unchanged"       "claude mcp serve"                                  "${GOT[2]}"
+
 # --- opencode ---------------------------------------------------------------------------------
 reset
 mkdir -p "$D/data/opencode"

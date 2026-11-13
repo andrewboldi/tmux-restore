@@ -120,6 +120,12 @@ rewrite() {
 		for pid in "$pane_pid" $(proc_children "$pane_pid"); do
 			for agent in "${AGENTS[@]}"; do
 				"${agent}_match" "$pid" 2> /dev/null || continue
+				# Not a conversation, but something the agent says to start again as it was
+				if declare -F "${agent}_restart" > /dev/null &&
+					NEW=$("${agent}_restart" "$pid" 2> /dev/null) && [[ -n $NEW ]]; then
+					NEW="$MARK$(scope_prefix "$pid")$NEW"
+					return
+				fi
 				if id=$("${agent}_session" "$pid" 2> /dev/null) && [[ -n $id ]] &&
 					NEW=$("${agent}_resume" "$pid" "$id" 2> /dev/null) && [[ -n $NEW ]]; then
 					NEW="$MARK$(scope_prefix "$pid")$NEW"

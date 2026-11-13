@@ -16,7 +16,23 @@ claude_drop_flags="-c --continue -r --resume --session-id --fork-session --from-
 claude_dir() { printf '%s' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"; }
 
 claude_exact=1 # the registry says which conversation each process has open
-claude_match() { [[ $(proc_comm "$1") == claude ]]; }
+claude_match() {
+	[[ $(proc_comm "$1") == claude ]] && proc_args "$1" || return 1
+	# A subcommand (claude --help, v2.1.325) isn't a conversation, so it's saved like any other
+	# command. Remote Control (rc) isn't one either, but comes back as it was: claude_restart.
+	case ${ARGV[0]:-} in
+	agents | attach | auth | auto-mode | doctor | gateway | import | install | logs | mcp | plugin | plugins | purge | respawn | rm | setup-token | stop | kill | ultrareview | update | upgrade) return 1 ;;
+	esac
+}
+
+# Remote Control (`claude rc`, `claude remote-control`) has no conversation of its own: start it
+# again with the same arguments.
+claude_restart() {
+	proc_args "$1" || return 1
+	[[ ${ARGV[0]:-} == rc || ${ARGV[0]:-} == remote-control ]] || return 1
+	printf 'claude'
+	printf ' %q' "${ARGV[@]}"
+}
 
 claude_session() {
 	local sid start
