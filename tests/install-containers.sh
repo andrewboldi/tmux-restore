@@ -20,11 +20,13 @@ mkdir "$D/src"
 git -C "$D/work" bundle create -q "$D/src/tmux-restore" HEAD main
 
 # Packages the base images lack that a real machine always has, so the run below only tests the
-# installer: sudo for the sudo user, and ps/flock where the image is minimal.
+# installer: sudo for the sudo user, and ps/flock where the image is minimal. Arch upgrades
+# everything first (-Syu): with -Sy alone it's a partial upgrade, which Arch doesn't support and
+# which fails whenever the image is older than the package repositories.
 setup='
 if command -v apt-get >/dev/null; then apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq sudo procps ca-certificates >/dev/null
 elif command -v dnf >/dev/null; then dnf install -y -q sudo procps-ng util-linux >/dev/null
-elif command -v pacman >/dev/null; then pacman -Sy --noconfirm --needed sudo procps-ng >/dev/null; fi
+elif command -v pacman >/dev/null; then pacman -Syu --noconfirm --needed sudo procps-ng >/dev/null; fi
 useradd -m tester && echo "tester ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/tester'
 status=0
 for image in "${images[@]}"; do
