@@ -22,8 +22,8 @@ or a match for an entry in your `@resurrect-processes`. An entry `"git log"` mat
 that start with `git log`, and `"btop->btop --utf-force"` matches `btop`. A `"~pattern"` entry
 counts only if it has a `->`; otherwise its commands come back typed.
 
-tmux-restore restarts a few more programs that are safe to run again: the monitors `nvtop`,
-`iotop` and `nethogs`, and `journalctl`, `docker logs`, `docker compose logs` and `kubectl logs`
+tmux-restore restarts a few more programs that are safe to run again: the monitors `btop`,
+`nvtop`, `iotop` and `nethogs`, and `journalctl`, `docker logs`, `docker compose logs` and `kubectl logs`
 when they follow logs (`-f`, `--follow`, or a group of short flags with `f` in it, like `-fu`).
 `logs` has to come right after the program name, so `kubectl -n prod logs -f` comes back typed.
 So does anything run with `sudo`, which would ask for a password.

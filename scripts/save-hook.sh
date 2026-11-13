@@ -4,7 +4,7 @@
 #   coding agent   -> the agent's resume command (agents/*.sh): reopens the same conversation
 #   safe program   -> unchanged; resurrect re-runs it (its defaults plus @resurrect-processes)
 #   restartable    -> re-run as it was, with any shell: monitors and log followers resurrect
-#                     doesn't list (nvtop, iotop, nethogs, journalctl -f, kubectl logs -f, ...)
+#                     doesn't list (btop, nvtop, iotop, nethogs, journalctl -f, ...)
 #   anything else  -> with zsh, typed on the prompt and waiting for Enter; with other shells
 #                     unchanged, and resurrect doesn't re-run it
 # Rewritten commands start with TMUX_RESTORE=1, which tmux-restore.tmux adds to
@@ -91,7 +91,7 @@ tidy() {
 # that follows logs (-f, --follow, or a group of short flags with f in it, like journalctl -fu).
 # "logs" must come right after the program: in `kubectl -n logs delete -f x.yaml` it's a value.
 restartable() {
-	local monitor='^(nvtop|iotop|nethogs)( |$)'
+	local monitor='^(btop|nvtop|iotop|nethogs)( |$)'
 	local logs='^(journalctl|docker logs|docker compose logs|docker-compose logs|kubectl logs)'
 	local follows='( [^ ]+)* (-[[:alpha:]]*f[[:alpha:]]*|--follow)( |$)'
 	[[ $1 =~ $monitor || $1 =~ $logs$follows ]]

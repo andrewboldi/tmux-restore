@@ -72,7 +72,7 @@ check "@resurrect-processes: wins over restartable" ":journalctl -f -u nginx" "$
 tmux set -g @resurrect-processes ''
 # monitors and commands that follow logs restart with any shell, though resurrect doesn't list
 # them; commands that only look like them don't
-restarts=('nvtop' 'iotop -o' 'nethogs wlan0' 'journalctl -f' 'journalctl -fu nginx' 'journalctl -u nginx -f'
+restarts=('btop' 'nvtop' 'iotop -o' 'nethogs wlan0' 'journalctl -f' 'journalctl -fu nginx' 'journalctl -u nginx -f'
 	'journalctl -xef' 'journalctl --follow -n 50' 'journalctl -u my\ unit -f' 'docker logs -f web'
 	'docker logs web --follow' 'docker logs -tf web' 'docker compose logs -f' 'docker-compose logs -f api'
 	'kubectl logs -f deploy/api' 'kubectl logs api-0 -n prod -f')
