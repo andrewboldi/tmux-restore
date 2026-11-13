@@ -14,6 +14,7 @@ jobs:
       - run: tests/hook-unit.sh
       - run: tests/agents-unit.sh
       - run: tests/install-linger.sh
+      - run: tests/install-packages.sh
       - run: tests/proc-live.sh
       - run: tests/shutdown-unit.sh
 

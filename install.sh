@@ -78,7 +78,12 @@ install_packages() {
 	brew) brew install -q "${pkgs[@]}" ;;
 	apt) as_root apt-get update -qq && as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${pkgs[@]}" > /dev/null ;;
 	dnf | yum) as_root "$pm" install -y -q "${pkgs[@]}" > /dev/null ;;
-	pacman) as_root pacman -Sy --noconfirm --needed "${pkgs[@]}" > /dev/null ;;
+	pacman)
+		# No -y: refreshing the package lists without upgrading everything is a partial upgrade,
+		# which Arch doesn't support, and which fails when new packages need newer libraries.
+		as_root pacman -S --noconfirm --needed "${pkgs[@]}" > /dev/null ||
+			die "pacman couldn't install ${pkgs[*]}. Update your system first (sudo pacman -Syu), then run this again."
+		;;
 	zypper) as_root zypper -n -q install "${pkgs[@]}" > /dev/null ;;
 	apk) as_root apk add -q "${pkgs[@]}" ;;
 	esac
