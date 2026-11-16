@@ -6,6 +6,23 @@
 
 PROC=${TMUX_RESTORE_PROC:-/proc}
 if [[ -n ${TMUX_RESTORE_PROC:-} || -r /proc/self/cmdline ]]; then HAVE_PROCFS=1; else HAVE_PROCFS=""; fi
+HAVE_SNAPSHOT=""
+
+# proc_snapshot: without /proc, read every process's parent, name and arguments up front, in two
+# ps calls, for proc_argv, proc_comm, proc_children and proc_ppid to answer from. Otherwise a save
+# starts a ps for every process and every agent (over a thousand on a busy Mac, ~15s a save).
+# Processes started after the snapshot are invisible to those four functions.
+proc_snapshot() {
+	[[ -z $HAVE_PROCFS ]] || return 0
+	declare -gA SNAP_PPID=() SNAP_COMM=() SNAP_ARGS=() SNAP_KIDS=()
+	local pid ppid rest
+	while read -r pid ppid rest; do
+		SNAP_PPID[$pid]=$ppid SNAP_COMM[$pid]=$rest
+		SNAP_KIDS[$ppid]+="$pid "
+	done < <(ps -axo pid=,ppid=,comm= 2> /dev/null)
+	while read -r pid rest; do SNAP_ARGS[$pid]=$rest; done < <(ps -axo pid=,args= 2> /dev/null)
+	HAVE_SNAPSHOT=1
+}
 
 # proc_argv PID: set the array ARGV to the command line of process PID.
 # (Without /proc only an approximation: ps joins the arguments with spaces.)
@@ -14,6 +31,9 @@ proc_argv() {
 	if [[ -n $HAVE_PROCFS ]]; then
 		[[ -r $PROC/$1/cmdline ]] || return 1
 		mapfile -td '' ARGV < "$PROC/$1/cmdline"
+	elif [[ -n $HAVE_SNAPSHOT ]]; then
+		[[ -n ${SNAP_ARGS[$1]+set} ]] || return 1
+		read -ra ARGV <<< "${SNAP_ARGS[$1]}"
 	else
 		local args
 		args=$(ps -o args= -p "$1" 2>/dev/null) || return 1
@@ -27,6 +47,9 @@ proc_comm() {
 	local comm
 	if [[ -n $HAVE_PROCFS ]]; then
 		[[ -r $PROC/$1/comm ]] && comm=$(<"$PROC/$1/comm") || return 1
+	elif [[ -n $HAVE_SNAPSHOT ]]; then
+		[[ -n ${SNAP_COMM[$1]+set} ]] || return 1
+		comm=${SNAP_COMM[$1]}
 	else
 		comm=$(ps -o comm= -p "$1" 2>/dev/null) || return 1
 	fi
@@ -71,6 +94,8 @@ proc_args() {
 proc_children() {
 	if [[ -n $HAVE_PROCFS ]] && compgen -G "$PROC/$1/task/*/children" > /dev/null; then
 		cat "$PROC/$1"/task/*/children 2> /dev/null | tr ' ' '\n' | grep -v '^$'
+	elif [[ -n $HAVE_SNAPSHOT ]]; then
+		[[ -n ${SNAP_KIDS[$1]:-} ]] && printf '%s\n' ${SNAP_KIDS[$1]} | sort -n # in pid order, as pgrep lists them
 	else
 		pgrep -P "$1" 2>/dev/null
 	fi
@@ -170,6 +195,8 @@ proc_ppid() {
 		stat=${stat##*) }
 		read -ra stat <<< "$stat"
 		printf '%s\n' "${stat[1]}"
+	elif [[ -n $HAVE_SNAPSHOT ]]; then
+		[[ -n ${SNAP_PPID[$1]+set} ]] && printf '%s\n' "${SNAP_PPID[$1]}"
 	else
 		ps -o ppid= -p "$1" 2> /dev/null | tr -d ' '
 	fi
