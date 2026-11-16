@@ -169,6 +169,7 @@ main() {
 	chmod 700 "$(dirname "$save_file")" 2> /dev/null
 	load_agents
 	restore_list
+	proc_snapshot
 	ZSH=""
 	[[ $(tmux show -gqv default-shell) == */zsh ]] && ZSH=1 # restored panes run default-shell
 	while IFS=$'\t' read -r target pid venv; do pane_pids[$target]=$pid venvs[$target]=$venv; done \
