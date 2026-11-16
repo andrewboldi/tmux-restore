@@ -29,7 +29,7 @@
   <rect x="166" y="170" width="46" height="8" rx="4" fill="#59606d"/>
   <!-- restore arrow, counter-clockwise -->
   <path d="M 55.6 111.3 A 36 36 0 1 1 49.2 149.2" fill="none" stroke="#f0f3f6" stroke-width="11" stroke-linecap="round"/>
-  <path d="M 39.4 103.4 L 64.6 100.6 L 54.4 123.8 Z" fill="#f0f3f6" stroke="#f0f3f6" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M 47.6 101.5 L 42.9 125.5 L 66.2 118.2 Z" fill="#f0f3f6" stroke="#f0f3f6" stroke-width="4" stroke-linejoin="round"/>
   <!-- clock hands -->
   <path d="M 84 116 V 136 L 98 145" fill="none" stroke="#1bb91f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
