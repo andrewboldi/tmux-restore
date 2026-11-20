@@ -16,7 +16,7 @@ proc_argv() {
 		mapfile -td '' ARGV < "$PROC/$1/cmdline"
 	else
 		local args
-		args=$(ps -o args= -p "$1" 2>/dev/null) || return 1
+		args=$(ps -ww -o args= -p "$1" 2>/dev/null) || return 1
 		read -ra ARGV <<< "$args"
 	fi
 	(( ${#ARGV[@]} ))
