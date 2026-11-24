@@ -16,6 +16,7 @@ jobs:
       - run: tests/install-linger.sh
       - run: tests/install-packages.sh
       - run: tests/proc-live.sh
+      - run: tests/proc-ps.sh
       - run: tests/shutdown-unit.sh
 
   restore:
@@ -67,6 +68,8 @@ jobs:
         run: tests/agents-unit.sh
       - if: success() || failure() # run every check, to see them all
         run: tests/proc-live.sh
+      - if: success() || failure() # run every check, to see them all
+        run: tests/proc-ps.sh
       - if: success() || failure() # run every check, to see them all
         run: tests/restore-race.sh double
       - if: success() || failure() # run every check, to see them all

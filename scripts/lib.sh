@@ -19,8 +19,8 @@ proc_snapshot() {
 	while read -r pid ppid rest; do
 		SNAP_PPID[$pid]=$ppid SNAP_COMM[$pid]=$rest
 		SNAP_KIDS[$ppid]+="$pid "
-	done < <(ps -axo pid=,ppid=,comm= 2> /dev/null)
-	while read -r pid rest; do SNAP_ARGS[$pid]=$rest; done < <(ps -axo pid=,args= 2> /dev/null)
+	done < <(ps -ww -axo pid=,ppid=,comm= 2> /dev/null)
+	while read -r pid rest; do SNAP_ARGS[$pid]=$rest; done < <(ps -ww -axo pid=,args= 2> /dev/null)
 	HAVE_SNAPSHOT=1
 }
 

@@ -8,6 +8,7 @@ Bug reports, fixes and new agent adapters are welcome. Open an issue or a pull r
 tests/hook-unit.sh          # flag filtering, quoting, pre-typed commands (needs tmux, zsh, jq, sqlite3)
 tests/agents-unit.sh        # every adapter against a fake /proc
 tests/proc-live.sh          # the process helpers against real processes (/proc, or ps and lsof)
+tests/proc-ps.sh            # the ps fallback macOS uses, on any system: long command lines stay whole
 tests/shutdown-unit.sh      # the save at shutdown, with fake gdbus and tmux
 tests/install-linger.sh     # lingering: on at install, off at uninstall if we turned it on
 tests/install-packages.sh   # on Arch: no partial upgrade, and a clear message if pacman fails
